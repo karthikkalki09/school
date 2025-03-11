@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Online School & College Admission Portal</title>
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Font Awesome for icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <style>
+    body {
+      padding-bottom: 70px; /* Space for fixed footer */
+    }
+    .banner {
+      position: relative;
+      height: 300px;
+      overflow: hidden;
+    }
+    .banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .banner-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #fff;
+      width: 90%;
+      max-width: 600px;
+    }
+    .card-clickable {
+      cursor: pointer;
+    }
+    .card-img-top {
+      height: 150px;
+      object-fit: cover;
+    }
+    .footer a.nav-link {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .footer a.nav-link:hover {
+      color: #007bff;
+    }
+    /* Menu Bar styles */
+    .menu-bar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .menu-bar a {
+      display: block;
+      margin: 10px 0;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .menu-bar a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header: Left button loads the menu; right button loads account details -->
+  <header class="d-flex justify-content-between align-items-center p-3 border-bottom">
+    <div>
+      <button class="btn btn-link text-dark" onclick="loadMenu()">
+        <i class="fas fa-bars fa-lg"></i>
+      </button>
+    </div>
+    <div>
+      <button class="btn btn-link text-dark" onclick="loadAccount()">
+        <i class="fas fa-user fa-lg"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Dynamic Content Area -->
+  <main class="container my-4" id="dynamicContent">
+    <!-- Content will be loaded dynamically here -->
+  </main>
+
+  <!-- Footer Navigation -->
+  <footer class="footer fixed-bottom bg-light border-top">
+    <div class="container">
+      <div class="row text-center py-2">
+        <div class="col">
+          <a href="#" class="nav-link" onclick="loadHome()">
+            <i class="fas fa-home fa-lg"></i><br />
+            Home
+          </a>
+        </div>
+        <div class="col">
+          <a href="#" class="nav-link" onclick="loadSearch()">
+            <i class="fas fa-search fa-lg"></i><br />
+            Search
+          </a>
+        </div>
+        <div class="col">
+          <a href="#" class="nav-link" onclick="loadCategories()">
+            <i class="fas fa-th-large fa-lg"></i><br />
+            Categories
+          </a>
+        </div>
+        <div class="col">
+          <a href="#" class="nav-link" onclick="loadCart()">
+            <i class="fas fa-shopping-bag fa-lg"></i><br />
+            Bag
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Buy Now Modal -->
+  <div class="modal fade" id="buyModal" tabindex="-1" aria-labelledby="buyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content shadow-sm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="buyModalLabel">Enter Shipping Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="buyForm">
+            <input type="hidden" id="selectedProductName" />
+            <input type="hidden" id="selectedProductPrice" />
+            <div class="mb-3">
+              <label for="paymentMethod" class="form-label">Payment Method</label>
+              <input type="text" class="form-control" id="paymentMethod" placeholder="e.g., Credit Card, PayPal" required />
+            </div>
+            <div class="mb-3">
+              <label for="shippingAddress" class="form-label">Shipping Address</label>
+              <textarea class="form-control" id="shippingAddress" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="mobileNumber" class="form-label">Mobile Number</label>
+              <input type="text" class="form-control" id="mobileNumber" required />
+            </div>
+            <div class="mb-3">
+              <label for="additionalDetails" class="form-label">Additional Details</label>
+              <textarea class="form-control" id="additionalDetails"></textarea>
+            </div>
+            <p><strong>Product:</strong> <span id="displayProductName"></span></p>
+            <p><strong>Price:</strong> ₹<span id="displayProductPrice"></span></p>
+            <button type="submit" class="btn btn-primary w-100">Confirm Purchase</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Global variables
+    let cart = [];
+    let currentProductForPurchase = null;
+
+    // Global product details for dynamic product information
+    const productDetails = {
+      "Blue Uniform": {
+        name: "Blue Uniform",
+        category: "Uniforms",
+        price: 500,
+        image: "https://picsum.photos/200/150?random=1",
+        description: "Blue Uniform made from 100% cotton, comfortable and durable.",
+        color: "Blue",
+        type: "Cotton"
+      },
+      "Red Uniform": {
+        name: "Red Uniform",
+        category: "Uniforms",
+        price: 600,
+        image: "https://picsum.photos/200/150?random=2",
+        description: "Red Uniform made from polyester, perfect for school events.",
+        color: "Red",
+        type: "Polyester"
+      },
+      "Black Shoes": {
+        name: "Black Shoes",
+        category: "Shoes",
+        price: 700,
+        image: "https://picsum.photos/200/150?random=3",
+        description: "Black Shoes with excellent grip and style.",
+        color: "Black",
+        size: "9"
+      },
+      "White Shoes": {
+        name: "White Shoes",
+        category: "Shoes",
+        price: 800,
+        image: "https://picsum.photos/200/150?random=4",
+        description: "White Shoes, comfortable and trendy.",
+        color: "White",
+        size: "10"
+      }
+    };
+
+    // Check if user is logged in
+    function isLoggedIn() {
+      return localStorage.getItem("user") ? true : false;
+    }
+
+    // --------------------------
+    // Menu, Account, & Other Pages
+    // --------------------------
+    function loadMenu() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <div class="menu-bar">
+          <h4>Menu</h4>
+          <a href="#" onclick="loadAccount()">Account Details</a>
+          <a href="#" onclick="loadMyOrders()">My Orders</a>
+          <a href="#" onclick="loadAdmissions()">Taken Admissions</a>
+          <a href="#" onclick="loadAboutUs()">About Us</a>
+          <a href="#" onclick="loadContactUs()">Contact Us</a>
+        </div>
+      `;
+    }
+
+    function loadMyOrders() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <h2>My Orders</h2>
+        <p>Your order history will appear here.</p>
+      `;
+    }
+
+    function loadAdmissions() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <h2>Taken Admissions</h2>
+        <p>Your admission details will appear here.</p>
+      `;
+    }
+
+    function loadAboutUs() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <h2>About Us</h2>
+        <p>We are an online portal dedicated to providing school and college admission services along with uniforms and shoes.</p>
+      `;
+    }
+
+    function loadContactUs() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <h2>Contact Us</h2>
+        <p>Email: support@example.com<br>Phone: +1234567890</p>
+      `;
+    }
+
+    function loadAccount() {
+      const accountContentDiv = document.getElementById("dynamicContent");
+      let storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        const fullName = user.firstName ? user.firstName + " " + user.lastName : user.email;
+        accountContentDiv.innerHTML = `
+          <h3>Welcome, ${fullName}</h3>
+          <p>Email: ${user.email}</p>
+          <p>Mobile: ${user.mobile || "Not provided"}</p>
+          <button class="btn btn-danger" onclick="logout()">Logout</button>
+        `;
+      } else {
+        accountContentDiv.innerHTML = `
+          <ul class="nav nav-tabs" id="accountTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#loginTabContent" type="button" role="tab">Login</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#signupTabContent" type="button" role="tab">Sign Up</button>
+            </li>
+          </ul>
+          <div class="tab-content pt-3" id="accountTabContent">
+            <div class="tab-pane fade show active" id="loginTabContent" role="tabpanel">
+              <form id="loginForm">
+                <div class="mb-3">
+                  <label for="loginEmail" class="form-label">Email address</label>
+                  <input type="email" class="form-control" id="loginEmail" required />
+                </div>
+                <div class="mb-3">
+                  <label for="loginPassword" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="loginPassword" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+              </form>
+            </div>
+            <div class="tab-pane fade" id="signupTabContent" role="tabpanel">
+              <form id="signupForm">
+                <div class="row mb-3">
+                  <div class="col">
+                    <label for="firstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstName" required />
+                  </div>
+                  <div class="col">
+                    <label for="lastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="lastName" required />
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="signupEmail" class="form-label">Email Address</label>
+                  <input type="email" class="form-control" id="signupEmail" required />
+                </div>
+                <div class="mb-3">
+                  <label for="mobileNumber" class="form-label">Mobile Number</label>
+                  <input type="tel" class="form-control" id="mobileNumber" required />
+                </div>
+                <div class="row mb-3">
+                  <div class="col">
+                    <label for="signupPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="signupPassword" required />
+                  </div>
+                  <div class="col">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" required />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+              </form>
+            </div>
+          </div>
+        `;
+        // Login event
+        document.getElementById("loginForm").addEventListener("submit", function (e) {
+          e.preventDefault();
+          const email = document.getElementById("loginEmail").value;
+          const password = document.getElementById("loginPassword").value;
+          if (email && password) {
+            const user = { email: email };
+            localStorage.setItem("user", JSON.stringify(user));
+            alert("Logged in successfully!");
+            loadAccount();
+          } else {
+            alert("Please fill in all fields.");
+          }
+        });
+        // Signup event
+        document.getElementById("signupForm").addEventListener("submit", function (e) {
+          e.preventDefault();
+          const firstName = document.getElementById("firstName").value;
+          const lastName = document.getElementById("lastName").value;
+          const email = document.getElementById("signupEmail").value;
+          const mobile = document.getElementById("mobileNumber").value;
+          const password = document.getElementById("signupPassword").value;
+          const confirmPassword = document.getElementById("confirmPassword").value;
+          if (password !== confirmPassword) {
+            alert("Passwords do not match!");
+            return;
+          }
+          if (firstName && lastName && email && mobile && password) {
+            const user = { firstName, lastName, email, mobile };
+            localStorage.setItem("user", JSON.stringify(user));
+            alert("Signed up successfully!");
+            loadAccount();
+          } else {
+            alert("Please fill in all fields.");
+          }
+        });
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("user");
+      alert("Logged out successfully!");
+      loadAccount();
+    }
+
+    // --------------------------
+    // Main Pages: Home, Categories, School List, Products
+    // --------------------------
+    function loadHome() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <section class="banner">
+          <img src="banner.jpg" alt="Banner Image" />
+          <div class="banner-overlay">
+            <h1>Welcome to our Portal</h1>
+            <div class="input-group mt-3">
+              <input type="text" class="form-control" id="bannerSearchInput" placeholder="Search for schools or uniforms" />
+              <button class="btn btn-primary" id="bannerSearchBtn">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+        <div class="mt-4">
+          <h2>Home</h2>
+          <p>Welcome to our online portal. Use the navigation below to explore our services.</p>
+        </div>
+      `;
+      document.getElementById("bannerSearchBtn").addEventListener("click", function () {
+        const query = document.getElementById("bannerSearchInput").value.toLowerCase();
+        if (query.includes("uniform")) {
+          loadSchoolList("Uniforms");
+        } else if (query.includes("shoe")) {
+          loadSchoolList("Shoes");
+        } else {
+          loadHome();
+        }
+      });
+    }
+
+    function loadCategories() {
+      document.getElementById("dynamicContent").innerHTML = `
+        <h2>Categories</h2>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card card-clickable mb-3" data-category="Uniforms">
+              <div class="card-body">
+                <h5 class="card-title">Uniforms</h5>
+                <p class="card-text">Browse school uniforms by selecting a school.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card card-clickable mb-3" data-category="Shoes">
+              <div class="card-body">
+                <h5 class="card-title">Shoes</h5>
+                <p class="card-text">Browse school shoes by selecting a school.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.querySelectorAll(".card-clickable").forEach((card) => {
+        card.addEventListener("click", function () {
+          loadSchoolList(this.getAttribute("data-category"));
+        });
+      });
+    }
+
+    function loadSchoolList(category) {
+      const schools = ["Greenwood High", "Sunrise Academy", "Hilltop School"];
+      let html = `<h2>${category} - Select a School</h2><div class="row">`;
+      schools.forEach((school) => {
+        html += `
+          <div class="col-md-4">
+            <div class="card card-clickable mb-3" data-school="${school}" data-category="${category}">
+              <div class="card-body text-center">
+                <h5 class="card-title">${school}</h5>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      document.getElementById("dynamicContent").innerHTML = html;
+      document.querySelectorAll(".card-clickable[data-school]").forEach((card) => {
+        card.addEventListener("click", function () {
+          const school = this.getAttribute("data-school");
+          const category = this.getAttribute("data-category");
+          if (category === "Uniforms") loadUniforms(school);
+          else if (category === "Shoes") loadShoes(school);
+        });
+      });
+    }
+
+    function loadUniforms(school) {
+      let html = `<h2>${school} Uniforms</h2><div class="row">`;
+      const uniforms = [
+        {
+          name: "Blue Uniform",
+          price: 500,
+          color: "Blue",
+          type: "Cotton",
+          image: "https://picsum.photos/200/150?random=1",
+        },
+        {
+          name: "Red Uniform",
+          price: 600,
+          color: "Red",
+          type: "Polyester",
+          image: "https://picsum.photos/200/150?random=2",
+        },
+      ];
+      uniforms.forEach((item) => {
+        html += `
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <img src="${item.image}" class="card-img-top" alt="${item.name}" />
+              <div class="card-body">
+                <h5 class="card-title">${item.name}</h5>
+                <p class="card-text">
+                  <i class="fas fa-tint"></i> Color: ${item.color}<br />
+                  <i class="fas fa-tshirt"></i> Cloth Type: ${item.type}
+                </p>
+                <p class="card-text"><strong>Price:</strong> ₹${item.price}</p>
+                <button class="btn btn-success" onclick="openBuyNow('${item.name}', ${item.price})">Buy Now</button>
+                <button class="btn btn-primary" onclick="addToCart('${item.name}')">Add to Bag</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      document.getElementById("dynamicContent").innerHTML = html;
+    }
+
+    function loadShoes(school) {
+      let html = `<h2>${school} Shoes</h2><div class="row">`;
+      const shoes = [
+        {
+          name: "Black Shoes",
+          price: 700,
+          color: "Black",
+          size: "9",
+          image: "https://picsum.photos/200/150?random=3",
+        },
+        {
+          name: "White Shoes",
+          price: 800,
+          color: "White",
+          size: "10",
+          image: "https://picsum.photos/200/150?random=4",
+        },
+      ];
+      shoes.forEach((item) => {
+        html += `
+          <div class="col-md-6">
+            <div class="card mb-3">
+              <img src="${item.image}" class="card-img-top" alt="${item.name}" />
+              <div class="card-body">
+                <h5 class="card-title">${item.name}</h5>
+                <p class="card-text">
+                  <i class="fas fa-tint"></i> Color: ${item.color}<br />
+                  <i class="fas fa-shoe-prints"></i> Size: ${item.size}
+                </p>
+                <p class="card-text"><strong>Price:</strong> ₹${item.price}</p>
+                <button class="btn btn-success" onclick="openBuyNow('${item.name}', ${item.price})">Buy Now</button>
+                <button class="btn btn-primary" onclick="addToCart('${item.name}')">Add to Bag</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      document.getElementById("dynamicContent").innerHTML = html;
+    }
+
+    // --------------------------
+    // Cart & Product Details
+    // --------------------------
+    function loadCart() {
+      let html = `<h2>Your Bag</h2>`;
+      let cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+      if (cartItems.length === 0) {
+        html += `<p>Your bag is empty.</p>`;
+      } else {
+        html += `<ul class="list-group mb-3">`;
+        cartItems.forEach((item, index) => {
+          html += `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span onclick="showProductDetails('${item}')" style="cursor:pointer;">${item}</span>
+              <button class="btn btn-sm btn-danger" onclick="removeFromCart(${index})">×</button>
+            </li>
+          `;
+        });
+        html += `</ul>
+          <button class="btn btn-success" onclick="purchaseCart()">Buy Now</button>`;
+      }
+      document.getElementById("dynamicContent").innerHTML = html;
+    }
+
+    function removeFromCart(index) {
+      let cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+      cartItems.splice(index, 1);
+      localStorage.setItem("cart", JSON.stringify(cartItems));
+      loadCart();
+    }
+
+    function showProductDetails(productName) {
+      const product = productDetails[productName];
+      if (!product) {
+        alert("Product details not found.");
+        return;
+      }
+      let html = `<h2>${product.name} Details</h2>
+        <div class="card mb-3">
+          <img src="${product.image}" class="card-img-top" alt="${product.name}">
+          <div class="card-body">
+            <h5 class="card-title">${product.name}</h5>
+            <p class="card-text">${product.description}</p>
+            <p class="card-text"><strong>Price:</strong> ₹${product.price}</p>
+            <p class="card-text">Color: ${product.color}</p>`;
+      if (product.category === "Uniforms") {
+        html += `<p class="card-text">Type: ${product.type}</p>`;
+      }
+      if (product.category === "Shoes") {
+        html += `<p class="card-text">Size: ${product.size}</p>`;
+      }
+      html += `<button class="btn btn-success" onclick="openBuyNow('${product.name}', ${product.price})">Buy Now</button>
+            <button class="btn btn-danger" onclick="removeFromCartDetail('${product.name}')">Remove from Bag</button>
+          </div>
+        </div>
+        <button class="btn btn-secondary" onclick="loadCart()">Back to Bag</button>`;
+      document.getElementById("dynamicContent").innerHTML = html;
+    }
+
+    function removeFromCartDetail(productName) {
+      let cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+      const index = cartItems.indexOf(productName);
+      if (index !== -1) {
+        cartItems.splice(index, 1);
+        localStorage.setItem("cart", JSON.stringify(cartItems));
+        loadCart();
+      }
+    }
+
+    // --------------------------
+    // Purchase: Open Buy Now Modal and handle its form
+    // --------------------------
+    function openBuyNow(productName, productPrice) {
+      if (!isLoggedIn()) {
+        alert("Please log in to make a purchase.");
+        loadAccount();
+        return;
+      }
+      document.getElementById("selectedProductName").value = productName;
+      document.getElementById("selectedProductPrice").value = productPrice;
+      document.getElementById("displayProductName").textContent = productName;
+      document.getElementById("displayProductPrice").textContent = productPrice.toFixed(2);
+      const buyModal = new bootstrap.Modal(document.getElementById("buyModal"));
+      buyModal.show();
+    }
+
+    document.getElementById("buyForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const productName = document.getElementById("selectedProductName").value;
+      const productPrice = parseFloat(document.getElementById("selectedProductPrice").value);
+      const paymentMethod = document.getElementById("paymentMethod").value;
+      const shippingAddress = document.getElementById("shippingAddress").value;
+      const mobileNumber = document.getElementById("mobileNumber").value;
+      const additionalDetails = document.getElementById("additionalDetails").value;
+      if (!paymentMethod || !shippingAddress || !mobileNumber) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+      let deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 7);
+      alert(
+        `Thank you for purchasing ${productName}!
+It will be delivered on ${deliveryDate.toLocaleDateString()}.
+Payment Method: ${paymentMethod}
+Shipping Address: ${shippingAddress}
+Mobile Number: ${mobileNumber}
+Additional Details: ${additionalDetails || "None"}`
+      );
+      const buyModalEl = document.getElementById("buyModal");
+      const modalInstance = bootstrap.Modal.getInstance(buyModalEl);
+      modalInstance.hide();
+    });
+
+    function addToCart(productName) {
+      let cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+      cartItems.push(productName);
+      localStorage.setItem("cart", JSON.stringify(cartItems));
+      alert(`${productName} added to bag.`);
+    }
+
+    function purchaseCart() {
+      let cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+      if (cartItems.length === 0) {
+        alert("Your bag is empty.");
+        return;
+      }
+      if (!isLoggedIn()) {
+        alert("Please log in to make a purchase.");
+        loadAccount();
+        return;
+      }
+      let html = `
+        <h2>Payment for Cart Items</h2>
+        <form id="cartPaymentForm">
+          <div class="mb-3">
+            <label for="cartShippingAddress" class="form-label">Shipping Address</label>
+            <textarea id="cartShippingAddress" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="cartMobileNumber" class="form-label">Mobile Number</label>
+            <input type="tel" id="cartMobileNumber" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label for="cartAdditionalDetails" class="form-label">Additional Details</label>
+            <textarea id="cartAdditionalDetails" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">Confirm Purchase</button>
+        </form>
+      `;
+      document.getElementById("dynamicContent").innerHTML = html;
+      document.getElementById("cartPaymentForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const address = document.getElementById("cartShippingAddress").value;
+        const mobile = document.getElementById("cartMobileNumber").value;
+        const additional = document.getElementById("cartAdditionalDetails").value;
+        if (address && mobile) {
+          let deliveryDate = new Date();
+          deliveryDate.setDate(deliveryDate.getDate() + 7);
+          alert(`Thank you for purchasing items (${cartItems.join(", ")})!
+Your order will be delivered on ${deliveryDate.toLocaleDateString()}.
+Shipping Address: ${address}
+Mobile Number: ${mobile}
+Additional Details: ${additional || "None"}`);
+          localStorage.removeItem("cart");
+          loadHome();
+        } else {
+          alert("Please fill in all required fields.");
+        }
+      });
+    }
+
+    // --------------------------
+    // Search Page (prompt-based)
+    // --------------------------
+    function loadSearch() {
+      let query = prompt("Enter search query:");
+      let html = `<h2>Search Results</h2>`;
+      if (query) {
+        query = query.toLowerCase();
+        if (query.includes("uniform")) {
+          html += `<p>Your search for "<strong>${query}</strong>" matched uniforms. <a href="#" onclick="loadCategories()">Browse Uniforms</a></p>`;
+        } else if (query.includes("shoe")) {
+          html += `<p>Your search for "<strong>${query}</strong>" matched shoes. <a href="#" onclick="loadCategories()">Browse Shoes</a></p>`;
+        } else {
+          html += `<p>No results found for "<strong>${query}</strong>".</p>`;
+        }
+      } else {
+        html += `<p>No query provided.</p>`;
+      }
+      document.getElementById("dynamicContent").innerHTML = html;
+    }
+
+    // --------------------------
+    // Initial Load
+    // --------------------------
+    loadHome();
+  </script>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
